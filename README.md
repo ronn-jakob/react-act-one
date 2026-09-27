@@ -1,16 +1,32 @@
-# React + Vite
+# Project Title: DIGISHOP - Digital Top-up Shop
+__Student Name: Viquiera, Ronn Jakob S.__ 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+__Section: BSIT 3DG1__
 
-Currently, two official plugins are available:
+__Website Description:__  A digital top-up shop where users can purchase Mobile Legends Diamonds and Valorant Points. The website provides a simple and user-friendly interface with product categories, quick navigation, language switching, dark and light mode, responsive design, and contact information for customer inquiries.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+__Technologies Used:__ 
 
-## React Compiler
+![ReactJS](https://img.shields.io/badge/ReactJS-vite-orange)
+![MySQL](https://img.shields.io/badge/Tailwind.css-blue)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features:
 
-## Expanding the ESLint configuration
+__useState() Features:__
+1. Toggles between dark mode and light mode.
+2. Switches the website language between English and Filipino.
+3. Selects between Mobile Legends and Valorant product categories.
+4. Opens and closes the mobile navigation menu.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+__useEffect() Features:__
+1. Adds or removes the dark mode class from the website.
+2. Updates the page language and browser tab title when the language changes.
+
+## Challenges and Fixes
+
+__Challenges Encountered:__  
+One of the main challenges encountered during development was making the website responsive across different screen sizes. Other challenges included implementing the dark and light mode switch, creating smooth navigation between sections, organizing reusable components, and displaying images and icons correctly.
+
+__How I Solved Them:__  
+I solved these challenges by using Tailwind CSS responsive utilities, flexible layouts, and breakpoint classes. I used React `useState()` and `useEffect()` to manage the theme and language settings, separated reusable elements into components, and used smooth scrolling with section IDs. I also checked the website at different viewport sizes to identify and fix layout and overflow issues.
