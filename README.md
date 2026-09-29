@@ -21,7 +21,7 @@ __useState() Features:__
 
 __useEffect() Features:__
 1. Adds or removes the dark mode class from the website.
-2. Updates the page language and browser tab title when the language changes.
+2. Updates the page language.
 
 ## Challenges and Fixes
 
