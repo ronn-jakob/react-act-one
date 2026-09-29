@@ -3,6 +3,9 @@ import "./mainSection.css";
 import CharacterPanel from "../components/CharacterPanel.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import Header from "../components/Header.jsx";
+import CheckoutPage from "../components/CheckoutPage.jsx";
+import { db } from "../firebase.js";
+import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
 
 const copy = {
   en: {
@@ -96,14 +99,17 @@ function MainSection() {
   const [lang, setLang] = useState("en");
   const [category, setCategory] = useState("mlbb");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const t = copy[lang];
  
-  // Sync the `dark` class on <html> whenever darkMode changes (Tailwind class-strategy dark mode)
+  // For the Dark mode Button
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
  
-  // Sync <html lang> and tab title whenever the language changes
+  // For the Language Button
   useEffect(() => {
     document.documentElement.lang = lang;
     document.title = lang === "fil" ? "Digishop — Digital Top-Up" : "Digishop — Digital Top-Up Shop";
@@ -135,6 +141,80 @@ function MainSection() {
     setCategory(selectedCategory);
     document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
   }
+
+  async function handleProductBuy(product) {
+    const itemId = `${category}-${product.amount}`;
+    const existingItem = cartItems.find((item) => item.id === itemId);
+
+    try {
+      if (existingItem) {
+        const quantity = existingItem.quantity + 1;
+        await updateDoc(doc(db, "cart", existingItem.firestoreId), { quantity });
+        setCartItems((currentItems) => currentItems.map((item) =>
+          item.id === itemId ? { ...item, quantity } : item
+        ));
+        return;
+      }
+
+      const item = {
+        id: itemId,
+        category: activeBadge,
+        amount: product.amount,
+        unit: activeUnit,
+        price: product.price,
+        quantity: 1,
+      };
+      const cartDocument = await addDoc(collection(db, "cart"), {
+        ...item,
+        createdAt: serverTimestamp(),
+      });
+      setCartItems((currentItems) => [...currentItems, { ...item, firestoreId: cartDocument.id }]);
+    } catch (error) {
+      console.error("Unable to update cart in Firebase", error);
+    }
+  }
+
+  async function removeFromCart(itemId) {
+    const itemToRemove = cartItems.find((item) => item.id === itemId);
+
+    if (!itemToRemove) return;
+
+    try {
+      await deleteDoc(doc(db, "cart", itemToRemove.firestoreId));
+      setCartItems((currentItems) => currentItems.filter((item) => item.id !== itemId));
+    } catch (error) {
+      console.error("Unable to remove cart item from Firebase", error);
+    }
+  }
+
+  async function handlePayment(contactDetails) {
+    const batch = writeBatch(db);
+    const orderId = doc(collection(db, "paidItems")).id;
+
+    cartItems.forEach((item) => {
+      const paidItemReference = doc(collection(db, "paidItems"));
+      batch.set(paidItemReference, {
+        orderId,
+        customerEmail: contactDetails.email,
+        customerPhone: contactDetails.phone,
+        id: item.id,
+        category: item.category,
+        amount: item.amount,
+        unit: item.unit,
+        price: item.price,
+        quantity: item.quantity,
+        subtotal: contactDetails.subtotal,
+        vat: contactDetails.vat,
+        total: contactDetails.total,
+        paidAt: serverTimestamp(),
+      });
+      batch.delete(doc(db, "cart", item.firestoreId));
+    });
+
+    await batch.commit();
+    setCartItems([]);
+    setShowCheckout(false);
+  }
  
   return (
     <div className="site-shell min-h-screen text-[#0F0F0F] dark:text-white transition-colors font-sans">
@@ -146,7 +226,25 @@ function MainSection() {
         setDarkMode={setDarkMode}
         mobileNavOpen={mobileNavOpen}
         setMobileNavOpen={setMobileNavOpen}
+        cartItems={cartItems}
+        cartOpen={cartOpen}
+        setCartOpen={setCartOpen}
+        removeFromCart={removeFromCart}
+        onCheckout={() => {
+          setCartOpen(false);
+          setShowCheckout(true);
+        }}
       />
+
+      {showCheckout ? (
+        <CheckoutPage
+          cartItems={cartItems}
+          onBack={() => setShowCheckout(false)}
+          onPay={handlePayment}
+          lang={lang}
+        />
+      ) : (
+        <>
  
       {/* HOME */}
       <section id="home" className="mx-auto max-w-6xl px-5 pt-16 pb-20">
@@ -241,7 +339,7 @@ function MainSection() {
               price={p.price}
               badge={activeBadge}
               buyLabel={t.products.buyNow}
-              onBuy={() => {}}
+              onBuy={() => handleProductBuy(p)}
             />
           ))}
         </div>
@@ -306,9 +404,11 @@ function MainSection() {
         </div>
       </section>
  
-      <footer className="mx-auto max-w-6xl px-5 py-8 text-center text-xs text-black/40 dark:text-white/30">
-        © {new Date().getFullYear()} Digishop. {t.footer}
-      </footer>
+          <footer className="mx-auto max-w-6xl px-5 py-8 text-center text-xs text-black/40 dark:text-white/30">
+            © {new Date().getFullYear()} Digishop. {t.footer}
+          </footer>
+        </>
+      )}
     </div>
   );
 }
